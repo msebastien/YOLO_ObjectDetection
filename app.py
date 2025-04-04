@@ -62,8 +62,7 @@ def yolo_inference(resource, type, custom_model, confidence):
 
         # Display the result
         while True:
-            cv2.namedWindow("frame")
-            cv2.imshow("Image", annotated_image)
+            cv2.imshow("Annotated Image", annotated_image)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break       
 
