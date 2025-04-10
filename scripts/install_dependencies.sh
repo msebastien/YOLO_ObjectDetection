@@ -3,7 +3,7 @@
 
 IS_VENV_INITIALIZED=false
 PROJECT_DIRECTORY_NAME=YOLO_ObjectDetection
-PROJECT_PATH=$(find $HOME -type d -name $PROJECT_DIRECTORY_NAME)
+PROJECT_PATH=$(find "$HOME" -type d -name $PROJECT_DIRECTORY_NAME)
 
 # Checks if there is a python virtual environment and activate it
 check_python_venv () {
