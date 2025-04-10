@@ -48,7 +48,7 @@ def annotate_frame(results, original_img):
 
 
 def yolo_inference(resource, type, custom_model, confidence):
-    model = YOLO("models/yolov12s-handgestures.pt")
+    model = YOLO("models/yolov12s_handgestures.pt")
     if custom_model:
         model = YOLO(custom_model)
 
