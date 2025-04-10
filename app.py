@@ -1,7 +1,6 @@
 import os
 import random
 import string
-from pathlib import Path
 import argparse
 from enum import Enum
 import tempfile
@@ -10,6 +9,7 @@ from ultralytics import YOLO
 import supervision as sv
 
 from display import Display
+from videowriter import VideoWriter
 
 
 class Resource(Enum):
@@ -18,8 +18,17 @@ class Resource(Enum):
     CAMERA = 2
 
 
-def annotate_frame(results):
-    annotated_image = None
+def copy_video_to_temp_file(file_path):
+    file_ext = os.path.splitext(file_path)[1]
+    video_path = tempfile.mktemp(suffix=file_ext)
+
+    with open(video_path, "wb") as f:
+        with open(file_path, "rb") as g:
+            f.write(g.read())
+
+
+def annotate_frame(results, original_img):
+    annotated_image = original_img
 
     if len(results) > 0:
         result = results[0]
@@ -27,7 +36,7 @@ def annotate_frame(results):
         box_annotator = sv.BoxAnnotator()
         label_annotator = sv.LabelAnnotator()
 
-        annotated_image = result.orig_img
+        # annotated_image = result.orig_img
         annotated_image = box_annotator.annotate(
             scene=annotated_image, detections=detections
         )
@@ -64,18 +73,13 @@ def yolo_inference(resource, type, custom_model, confidence):
         while True:
             cv2.imshow("Annotated Image", annotated_image)
             if cv2.waitKey(1) & 0xFF == ord("q"):
-                break       
+                break
 
         return output_image_path, None
 
     else:
         if type == Resource.VIDEO:
-            file_ext = os.path.splitext(resource)[1]
-            video_path = tempfile.mktemp(suffix=file_ext)
-
-            with open(video_path, "wb") as f:
-                with open(resource, "rb") as g:
-                    f.write(g.read())
+            copy_video_to_temp_file(resource)
 
         # Setup acquisition
         cap = cv2.VideoCapture(resource)
@@ -87,21 +91,12 @@ def yolo_inference(resource, type, custom_model, confidence):
         # Create display window
         display = Display(frame_width, frame_height)
 
-        # Create a file to save the annotated video output
-        id = "".join(
-            random.choices(string.ascii_uppercase + string.ascii_lowercase, k=5)
-        )
-        output_video_path = f"captures/annotated_output_{id}.webm"
-        path = Path(output_video_path)
-        path.parent.mkdir(exist_ok=True, parents=True)
-        open(output_video_path, "xb").close()
-
-        out = cv2.VideoWriter(
-            output_video_path,
-            cv2.VideoWriter.fourcc(*"vp80"),
-            fps,
-            frame_size,
-        )
+        # Initialize VideoWriter utility and start process
+        video = VideoWriter(
+            file_name="annotated_output",
+            fps=fps,
+            frame_size=frame_size,
+        ).start()
 
         # Acquisition
         while cap.isOpened():
@@ -111,18 +106,21 @@ def yolo_inference(resource, type, custom_model, confidence):
 
             # Predict and save the newly annotated frame
             results = model.predict(source=frame, imgsz=frame_size, conf=confidence)
-            annotated_frame = annotate_frame(results)
+            annotated_frame = annotate_frame(results, frame)
 
             # Display in a window and write to a temp file
             should_quit = display.paint(annotated_frame)
-            out.write(annotated_frame)
+
+            # Write to video file in a separate process
+            video.write(annotated_frame)
 
             if should_quit or cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
         cap.release()
-        out.release()
-        return None, output_video_path
+        video.stop()
+
+        return None, video.get_path()
 
 
 def main():
