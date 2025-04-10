@@ -3,6 +3,7 @@
 
 IS_VENV_INITIALIZED=false
 PROJECT_DIRECTORY_NAME=YOLO_ObjectDetection
+PROJECT_PATH=$(find $HOME -type d -name $PROJECT_DIRECTORY_NAME)
 
 # Checks if there is a python virtual environment and activate it
 check_python_venv () {
@@ -20,7 +21,7 @@ check_python_venv () {
 }
 
 install_pypi_packages () {
-    cd "$HOME"/"$PROJECT_DIRECTORY_NAME" || exit
+    cd "$PROJECT_PATH" || exit
     check_python_venv "$(pwd)"
 
     python3 -m pip install -U -v    \
@@ -38,7 +39,7 @@ install_pypi_packages () {
 }
 
 install_yolo () {
-    cd "$HOME"/"$PROJECT_DIRECTORY_NAME" || exit
+    cd "$PROJECT_PATH" || exit
     check_python_venv "$(pwd)"
     
     python3 -m pip -v install git+https://github.com/sunsmarterjie/yolov12.git
