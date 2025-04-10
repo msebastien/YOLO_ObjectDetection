@@ -78,9 +78,6 @@ def yolo_inference(resource, type, custom_model, confidence):
         return output_image_path, None
 
     else:
-        if type == Resource.VIDEO:
-            copy_video_to_temp_file(resource)
-
         # Setup acquisition
         cap = cv2.VideoCapture(resource)
         fps = cap.get(cv2.CAP_PROP_FPS)
