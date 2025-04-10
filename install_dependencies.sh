@@ -2,7 +2,7 @@
 # Written by Sébastien Maes
 
 IS_VENV_INITIALIZED=false
-PROJECT_DIRECTORY_NAME=yolov12-handgestures
+PROJECT_DIRECTORY_NAME=YOLO_ObjectDetection
 
 # Checks if there is a python virtual environment and activate it
 check_python_venv () {
