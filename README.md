@@ -1,1 +1,1 @@
-# yolov12-handgestures
+# Real-Time Object Detection with YOLO
