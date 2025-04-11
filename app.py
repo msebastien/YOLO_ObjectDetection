@@ -127,7 +127,7 @@ def main():
         description="Hand Gestures recognition app powered by YOLOv12",
     )
     parser.add_argument(
-        "-t", "--threshold", default=0.25, help="Confidence threshold for detection"
+        "-t", "--threshold", type=float, default=0.25, help="Confidence threshold for detection"
     )
     parser.add_argument(
         "-m",
