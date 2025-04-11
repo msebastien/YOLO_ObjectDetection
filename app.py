@@ -14,8 +14,7 @@ from videowriter import VideoWriter
 
 class Resource(Enum):
     IMAGE = 0
-    VIDEO = 1
-    CAMERA = 2
+    STREAM = 1
 
 
 def copy_video_to_temp_file(file_path):
@@ -123,8 +122,8 @@ def yolo_inference(resource, type, custom_model, confidence):
 def main():
     # Instantiate the parser
     parser = argparse.ArgumentParser(
-        prog="YOLO Hand Gesture",
-        description="Hand Gestures recognition app powered by YOLOv12",
+        prog="YOLO Object Detection",
+        description="Object Detection app powered by YOLOv12",
     )
     parser.add_argument(
         "-t", "--threshold", type=float, default=0.25, help="Confidence threshold for detection"
@@ -160,12 +159,9 @@ def main():
     args = parser.parse_args()
 
     # Video file/stream acquisition
-    resource = args.camera
-    type = Resource.CAMERA
-
     if args.stream:
         resource = args.stream
-        type = Resource.VIDEO
+        type = Resource.STREAM
     elif args.image:
         resource = args.image
         type = Resource.IMAGE
