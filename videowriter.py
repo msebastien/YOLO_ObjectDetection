@@ -97,6 +97,9 @@ class VideoWriter(object):
         Args:
             image (numpy.ndarray): a multi-dimensional array representing a BGR image
         """
+        if self._frames is None:
+            return
+        
         if self._frames.full():
             self._frames.get()
 
