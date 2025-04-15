@@ -27,9 +27,9 @@ class MediaResource(object):
         if res_type == MediaResourceType.STREAM:
             self._res = cv2.VideoCapture(self._resource_location, self._capture_api)
         else:
-            self._res = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
+            self._res = None
 
-    def acquire(self) -> Tuple[bool, cv2.typing.MatLike]:
+    def read(self) -> Tuple[bool, cv2.typing.MatLike]:
         ret = False
         frame = None
 
@@ -37,7 +37,7 @@ class MediaResource(object):
             ret, frame = self._res.read()
         else:
             ret = True
-            frame = self._res
+            frame = self._res = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
 
         return ret, frame
 
