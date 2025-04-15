@@ -11,20 +11,20 @@ class MediaResourceType(Enum):
 class MediaResource(object):
     def __init__(
         self,
-        resource_location: Union[str, int],
-        type: MediaResourceType,
+        location: Union[str, int],
+        res_type: MediaResourceType,
     ):
-        self._resource_location = resource_location
-        self._type = type
+        self._resource_location = location
+        self._type = res_type
         self._capture_api = cv2.CAP_ANY
-        self._is_camera = isinstance(resource_location, int)
+        self._is_camera = type(location) is int
 
         # If a camera ID is specified
         if self._is_camera:
             self._type = MediaResourceType.STREAM
             self._capture_api = cv2.CAP_V4L2
 
-        if type == MediaResourceType.STREAM:
+        if res_type == MediaResourceType.STREAM:
             self._res = cv2.VideoCapture(self._resource_location, self._capture_api)
         else:
             self._res = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
