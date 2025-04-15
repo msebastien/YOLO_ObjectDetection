@@ -13,7 +13,7 @@ class MediaResource(object):
         self,
         location: Union[str, int],
         res_type: MediaResourceType,
-    ):
+    ) -> None:
         self._resource_location = location
         self._type = res_type
         self._capture_api = cv2.CAP_ANY
@@ -70,7 +70,7 @@ class MediaResource(object):
 
         return path
 
-    def frame_size(self):
+    def frame_size(self) -> Tuple[int, int]:
         width = height = 0
         if type == MediaResourceType.STREAM:
             width = int(self._res.get(cv2.CAP_PROP_FRAME_WIDTH))
