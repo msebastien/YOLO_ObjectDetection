@@ -76,7 +76,7 @@ class MediaResource(object):
             width = int(self._res.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(self._res.get(cv2.CAP_PROP_FRAME_HEIGHT))
         else:
-            width = self._res.shape[1]
-            height = self._res.shape[0]
+            width = self._res.shape[1] if self._res and self._res.any() else 0
+            height = self._res.shape[0] if self._res and self._res.any() else 0
 
         return width, height
