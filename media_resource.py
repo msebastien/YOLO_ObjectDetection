@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, Union
+from typing import Tuple, overload
 import cv2
 
 
@@ -9,25 +9,25 @@ class MediaResourceType(Enum):
 
 
 class MediaResource(object):
-    def __init__(
-        self,
-        location: Union[str, int],
-        res_type: MediaResourceType,
-    ) -> None:
-        self._resource_location = location
-        self._type = res_type
+    @overload
+    def __init__(self, filename: str, filetype: MediaResourceType) -> None:
+        self._resource_location = filename
+        self._type = filetype
         self._capture_api = cv2.CAP_ANY
-        self._is_camera = type(location) is int
+        self._is_camera = False
 
-        # If a camera ID is specified
-        if self._is_camera:
-            self._type = MediaResourceType.STREAM
-            self._capture_api = cv2.CAP_V4L2
+        self._res = None
 
-        if res_type == MediaResourceType.STREAM:
+        if filetype == MediaResourceType.STREAM:
             self._res = cv2.VideoCapture(self._resource_location, self._capture_api)
-        else:
-            self._res = None
+
+    @overload
+    def __init__(self, camera_id: int) -> None:
+        self._resource_location = camera_id
+        self._type = MediaResourceType.STREAM
+        self._capture_api = cv2.CAP_V4L2
+        self._is_camera = True
+        self._res = cv2.VideoCapture(self._resource_location, self._capture_api)
 
     def read(self) -> Tuple[bool, cv2.typing.MatLike]:
         ret = False
