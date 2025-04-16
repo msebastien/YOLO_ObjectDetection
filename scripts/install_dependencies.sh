@@ -25,6 +25,7 @@ install_pypi_packages () {
     check_python_venv "$(pwd)"
 
     python3 -m pip install -U -v    \
+    python-magic                    \
     opencv-python                   \
     opencv-contrib-python           \
     numpy                           \
