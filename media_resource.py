@@ -42,6 +42,11 @@ class MediaResource(object):
 
         return ret, frame
 
+    def release(self):
+        if self._res and self._res.any():
+            self._res.release()
+            self._res = None
+
     def is_opened(self) -> bool:
         ret = False
 
