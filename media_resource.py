@@ -42,7 +42,7 @@ class MediaResource(object):
 
         return ret, frame
 
-    def release(self):
+    def release(self) -> None:
         if self._res and self._res.any():
             self._res.release()
             self._res = None
