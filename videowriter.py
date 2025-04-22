@@ -2,6 +2,7 @@ import os
 import random
 import string
 import logging
+from typing import Union, Tuple, Self
 import cv2
 from ctypes import c_bool, c_int
 from queue import Empty, Full
@@ -18,13 +19,13 @@ class VideoWriter(object):
 
     def __init__(
         self,
-        file_name,
-        fps,
-        frame_size,
-        timeout=1,
-        buffer_duration=10,
-        verbose=False,
-    ):
+        file_name: str,
+        fps: float,
+        frame_size: Tuple[int, int],
+        timeout: int = 1,
+        buffer_duration: int = 10,
+        verbose: bool = False,
+    ) -> None:
         # Create file and get path to it
         self.file_name = file_name
         self._output_file_path = self._create_output_file(self.file_name)
@@ -47,7 +48,7 @@ class VideoWriter(object):
         self._frames = None
         self._max_queue_size = int(buffer_duration * self.fps)
 
-    def is_running(self):
+    def is_running(self) -> bool:
         """
         This method allows to know if the video writer process is active or not.
         Returns:
@@ -56,7 +57,7 @@ class VideoWriter(object):
         """
         return self._p is not None and self._p.is_alive()
 
-    def is_file_open(self):
+    def is_file_open(self) -> bool:
         """
         Indicates whether the video file is open (True) or closed (False).
         Returns:
@@ -64,7 +65,7 @@ class VideoWriter(object):
         """
         return self._is_open.value
 
-    def path(self):
+    def path(self) -> str:
         """
         Path to the output video file.
         Returns:
@@ -72,7 +73,7 @@ class VideoWriter(object):
         """
         return self._output_file_path
 
-    def start(self):
+    def start(self) -> Self:
         """
         Start the Video Writer process.
         Returns:
@@ -94,7 +95,7 @@ class VideoWriter(object):
             self._p = self._create_process(self._max_queue_size)
         return self
 
-    def stop(self):
+    def stop(self) -> Self:
         """
         Stop the Video Writer process.
         Returns:
@@ -145,7 +146,7 @@ class VideoWriter(object):
         else:
             self._queue_frame_count.value += 1
 
-    def _create_process(self, max_queue_size):
+    def _create_process(self, max_queue_size: int) -> Union[Process, None]:
         """
         Initialize and start a separate process to write frames to a video file.
         Args:
@@ -170,8 +171,9 @@ class VideoWriter(object):
             p.daemon = True
             p.start()
             return p
+        return None
 
-    def _create_output_file(self, file_name):
+    def _create_output_file(self, file_name: str) -> str:
         """
         Create a file to save the annotated video output.
         Args:
@@ -189,7 +191,7 @@ class VideoWriter(object):
 
         return output_video_path
 
-    def _writer_thread(self, video, queue):
+    def _writer_thread(self, video: cv2.VideoWriter, queue: Queue) -> None:
         while self.is_file_open() or not queue.empty():
             # Process frames
             try:
