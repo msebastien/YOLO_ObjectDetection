@@ -1,10 +1,11 @@
 import random
 import string
+import logging
 import cv2
+from pathlib import Path
 from ctypes import c_bool, c_int
 from queue import Empty, Full
 from multiprocessing import Process, Queue, Value, current_process
-from pathlib import Path
 
 
 class VideoWriter(object):
@@ -45,6 +46,12 @@ class VideoWriter(object):
         self._max_queue_size = int(buffer_duration * self.fps)
 
     def is_running(self):
+        """
+        This method allows to know if the video writer process is active or not
+        Returns:
+            bool: True if the video writer process is running
+                  in the background, else False
+        """
         return self._p is not None and self._p.is_alive()
 
     def is_file_open(self):
@@ -132,7 +139,9 @@ class VideoWriter(object):
             self._frames.get()
             self._queue_frame_count.value -= 1
             self._queue_frame_dropped_count.value += 1
-            print(f"[VideoWriter] Dropped Frames:{self._queue_frame_dropped_count.value}")
+            print(
+                f"[VideoWriter] Dropped Frames:{self._queue_frame_dropped_count.value}"
+            )
         else:
             self._queue_frame_count.value += 1
 
