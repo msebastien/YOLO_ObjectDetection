@@ -1,11 +1,13 @@
+import os
 import random
 import string
 import logging
 import cv2
-from pathlib import Path
 from ctypes import c_bool, c_int
 from queue import Empty, Full
 from multiprocessing import Process, Queue, Value, current_process
+
+logger = logging.getLogger(__name__)
 
 
 class VideoWriter(object):
@@ -47,24 +49,24 @@ class VideoWriter(object):
 
     def is_running(self):
         """
-        This method allows to know if the video writer process is active or not
+        This method allows to know if the video writer process is active or not.
         Returns:
             bool: True if the video writer process is running
-                  in the background, else False
+                  in the background, else False.
         """
         return self._p is not None and self._p.is_alive()
 
     def is_file_open(self):
         """
-        Indicates whether the video file is open (True) or closed (False)
+        Indicates whether the video file is open (True) or closed (False).
         Returns:
-            bool: True (open), else False (closed)
+            bool: True (open), else False (closed).
         """
         return self._is_open.value
 
     def path(self):
         """
-        Path to the output video file
+        Path to the output video file.
         Returns:
             string: path
         """
@@ -72,12 +74,12 @@ class VideoWriter(object):
 
     def start(self):
         """
-        Start the Video Writer process
+        Start the Video Writer process.
         Returns:
-            VideoWriter: Current instance of VideoWriter
+            VideoWriter: Current instance of VideoWriter.
         """
         if not self.is_running():
-            print("Start Video Writer")
+            logger.info("Start Video Writer")
             if self._is_open.value:
                 self._output_video.release()
 
@@ -94,9 +96,9 @@ class VideoWriter(object):
 
     def stop(self):
         """
-        Stop the Video Writer process
+        Stop the Video Writer process.
         Returns:
-            VideoWriter: Current instance of VideoWriter
+            VideoWriter: Current instance of VideoWriter.
         """
         if self.is_running():
             # Free allocated queue data and join thread
@@ -119,15 +121,15 @@ class VideoWriter(object):
 
     def write(self, image):
         """
-        Add image to the frame queue to be written to a file
+        Add image to the frame queue to be written to a file.
         Args:
-            image (numpy.ndarray): a multi-dimensional array representing a BGR image
+            image (numpy.ndarray): a multi-dimensional array representing a BGR image.
         """
         if self._frames is None:
             return
 
         if image is None and not image.any():
-            print("[VideoWriter] Image is None or an empty array")
+            logger.warning("Image is None or an empty array.")
 
         if not self.is_running():
             self.start()
@@ -135,24 +137,22 @@ class VideoWriter(object):
         try:
             self._frames.put(image, timeout=self._timeout)
         except Full:
-            print("[VideoWriter] Frame Queue is full. A frame will be dequeued.")
+            logger.warning("Frame Queue is full. A frame will be dequeued.")
             self._frames.get()
             self._queue_frame_count.value -= 1
             self._queue_frame_dropped_count.value += 1
-            print(
-                f"[VideoWriter] Dropped Frames:{self._queue_frame_dropped_count.value}"
-            )
+            logger.info(f"Dropped Frames:{self._queue_frame_dropped_count.value}")
         else:
             self._queue_frame_count.value += 1
 
     def _create_process(self, max_queue_size):
         """
-        Initialize and start a separate process to write frames to a video file
+        Initialize and start a separate process to write frames to a video file.
         Args:
-            queue_max_size (int): Maximum size allowed for the frame queue
+            queue_max_size (int): Maximum size allowed for the frame queue.
 
         Returns:
-            multiprocessing.Process: Initialized and started process
+            multiprocessing.Process: Initialized and started process.
         """
         if not self.is_running():
             # Create frame queue
@@ -162,7 +162,7 @@ class VideoWriter(object):
             # Initializes the Parallel process with the `writer_thread` function
             # the arguments that the function takes is mentioned in the args var
             p = Process(
-                name="Video Writer",
+                name="WriterProcess",
                 target=self._writer_thread,
                 args=(self._output_video, self._frames),
             )
@@ -173,19 +173,18 @@ class VideoWriter(object):
 
     def _create_output_file(self, file_name):
         """
-        Create a file to save the annotated video output
+        Create a file to save the annotated video output.
         Args:
-            file_name (string): Name of output video file excluding the file extension
+            file_name (string): Name of output video file excluding the file extension.
 
         Returns:
-            string: Path to the output video file
+            string: Path to the output video file.
         """
         id = "".join(
             random.choices(string.ascii_uppercase + string.ascii_lowercase, k=5)
         )
         output_video_path = f"captures/{file_name}_{id}.webm"
-        path = Path(output_video_path)
-        path.parent.mkdir(exist_ok=True, parents=True)
+        os.makedirs(os.path.dirname(output_video_path), exist_ok=True)
         open(output_video_path, "xb").close()
 
         return output_video_path
@@ -196,18 +195,17 @@ class VideoWriter(object):
             try:
                 frame = queue.get(timeout=self._timeout)
             except Empty:
-                print("VideoWriter thread: No frame available in the queue")
+                logger.warning("No frame available in the queue.")
                 continue
             else:
-                print(f"Writing frame n°{self._written_frame_count.value+1}...")
+                logger.info(f"Writing frame n°{self._written_frame_count.value+1}...")
                 self._queue_frame_count.value -= 1
                 video.write(frame)
                 self._written_frame_count.value += 1
 
             # Print debug info
             if self._verbose.value:
-                print(
-                    f"{current_process().name}/"
+                logger.debug(
                     f"File:{"Open" if self.is_file_open() else "Closed"}/"
                     f"Queue:{"Empty" if queue.empty() else "Not Empty" if not queue.full() else "Full"}/"
                     f"In Queue:{self._queue_frame_count.value}/"

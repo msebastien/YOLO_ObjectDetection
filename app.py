@@ -1,6 +1,9 @@
 import os
+import sys
 import random
 import string
+import logging
+import logging.handlers
 import argparse
 import tempfile
 import cv2
@@ -11,6 +14,9 @@ from enum import Enum
 # from media_resource import MediaResourceType
 from display import Display
 from videowriter import VideoWriter
+
+
+logger = logging.getLogger(__name__)
 
 
 class MediaResourceType(Enum):
@@ -171,25 +177,59 @@ def main():
 
     args = parser.parse_args()
 
+    # Init root logger
+    # Change root logger level from WARNING (default) to NOTSET in order for all messages to be delegated.
+    logging.getLogger().setLevel(logging.NOTSET)
+
+    # Add stdout handler for displaying logs in console
+    console = logging.StreamHandler(sys.stdout)
+    console.setLevel(logging.INFO if not args.verbose else logging.DEBUG)
+    formatter = logging.Formatter(
+        "[%(levelname)s][%(name)s][%(processName)s]%(message)s"
+    )
+    console.setFormatter(formatter)
+    logging.getLogger().addHandler(console)
+
+    # Create log directory
+    log_filename = "logs/object_detector_app.log"
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+    # Add file rotating handler, with level DEBUG
+    rotatingHandler = logging.handlers.RotatingFileHandler(
+        filename=log_filename,
+        maxBytes=1000000,
+        backupCount=5,
+    )
+    rotatingHandler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s\t[%(levelname)s][%(name)s][%(processName)s]%(message)s"
+    )
+    rotatingHandler.setFormatter(formatter)
+    logging.getLogger().addHandler(rotatingHandler)
+
+    logger.info("Started")
+
     # Video file/stream acquisition
     resource = args.stream
     type = MediaResourceType.STREAM
-    print("RESOURCE TYPE STREAM")
     if args.image:
         resource = args.image
         type = MediaResourceType.IMAGE
-        print("RESOURCE TYPE IMAGE")
+
+    logger.info(f"Resource Type: {type.name}")
 
     annotated_image_path, annotated_video_path = yolo_inference(
         resource, type, args.model, args.threshold, args.verbose
     )
 
     if annotated_image_path:
-        print(f"Annotated image file saved! ({annotated_image_path})")
+        logger.info(f"Annotated image file saved! ({annotated_image_path})")
     elif annotated_video_path:
-        print(f"Annotated video file saved! ({annotated_video_path})")
+        logger.info(f"Annotated video file saved! ({annotated_video_path})")
 
     cv2.destroyAllWindows()
+
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
