@@ -1,7 +1,8 @@
 import random
 import string
 import cv2
-from ctypes import c_bool
+from ctypes import c_bool, c_int
+from queue import Empty, Full
 from multiprocessing import Process, Queue, Value, current_process
 from pathlib import Path
 
@@ -12,10 +13,19 @@ class VideoWriter(object):
     execution.
     """
 
-    def __init__(self, file_name, fps, frame_size, debug=False):
+    def __init__(
+        self,
+        file_name,
+        fps,
+        frame_size,
+        timeout=1,
+        buffer_duration=10,
+        verbose=False,
+    ):
         # Create file and get path to it
         self.file_name = file_name
         self._output_file_path = self._create_output_file(self.file_name)
+        self._timeout = timeout
 
         # Set up codec and output video settings
         self.fps = fps
@@ -25,11 +35,14 @@ class VideoWriter(object):
 
         # Synchronized values (stored in Shared Memory)
         self._is_open = Value(c_bool, False)
-        self._debug = Value(c_bool, debug)
+        self._verbose = Value(c_bool, verbose)
+        self._queue_frame_count = Value(c_int, 0)
+        self._written_frame_count = Value(c_int, 0)
+        self._queue_frame_dropped_count = Value(c_int, 0)
 
         self._p = None
-        self._queue_max_size = int(5 * self.fps)
         self._frames = None
+        self._max_queue_size = int(buffer_duration * self.fps)
 
     def is_running(self):
         return self._p is not None and self._p.is_alive()
@@ -42,7 +55,7 @@ class VideoWriter(object):
         """
         return self._is_open.value
 
-    def get_path(self):
+    def path(self):
         """
         Path to the output video file
         Returns:
@@ -57,6 +70,10 @@ class VideoWriter(object):
             VideoWriter: Current instance of VideoWriter
         """
         if not self.is_running():
+            print("Start Video Writer")
+            if self._is_open.value:
+                self._output_video.release()
+
             # Open video file for writing data to it
             self._is_open.value = self._output_video.open(
                 filename=self._output_file_path,
@@ -65,7 +82,7 @@ class VideoWriter(object):
                 frameSize=self.frame_size,
             )
             # Spawn process for writing data in parallel
-            self._p = self._create_process(self._queue_max_size)
+            self._p = self._create_process(self._max_queue_size)
         return self
 
     def stop(self):
@@ -78,7 +95,9 @@ class VideoWriter(object):
             # Free allocated queue data and join thread
             self._frames.close()
             self._frames.join_thread()
-            self._frames.cancel_join_thread()
+            #   Allow exit without flushing the queue in some cases,
+            #   but can lead to frame data loss
+            # self._frames.cancel_join_thread()
 
             # Close video file (which will stop the writer process)
             self._output_video.release()
@@ -99,13 +118,25 @@ class VideoWriter(object):
         """
         if self._frames is None:
             return
-        
-        if self._frames.full():
+
+        if image is None and not image.any():
+            print("[VideoWriter] Image is None or an empty array")
+
+        if not self.is_running():
+            self.start()
+
+        try:
+            self._frames.put(image, timeout=self._timeout)
+        except Full:
+            print("[VideoWriter] Frame Queue is full. A frame will be dequeued.")
             self._frames.get()
+            self._queue_frame_count.value -= 1
+            self._queue_frame_dropped_count.value += 1
+            print(f"[VideoWriter] Dropped Frames:{self._queue_frame_dropped_count.value}")
+        else:
+            self._queue_frame_count.value += 1
 
-        self._frames.put(image)
-
-    def _create_process(self, queue_max_size):
+    def _create_process(self, max_queue_size):
         """
         Initialize and start a separate process to write frames to a video file
         Args:
@@ -116,14 +147,15 @@ class VideoWriter(object):
         """
         if not self.is_running():
             # Create frame queue
-            self._frames = Queue(maxsize=queue_max_size)
+            if not self._frames:
+                self._frames = Queue(maxsize=max_queue_size)
 
             # Initializes the Parallel process with the `writer_thread` function
             # the arguments that the function takes is mentioned in the args var
             p = Process(
-                name="Video Writer Process",
+                name="Video Writer",
                 target=self._writer_thread,
-                args=(self._output_video, self._frames, self._is_open, self._debug),
+                args=(self._output_video, self._frames),
             )
             # daemon true means, exit when main program stops
             p.daemon = True
@@ -149,18 +181,27 @@ class VideoWriter(object):
 
         return output_video_path
 
-    def _writer_thread(self, video, queue, is_file_open, debug):
-        while is_file_open.value or not queue.empty():
+    def _writer_thread(self, video, queue):
+        while self.is_file_open() or not queue.empty():
             # Process frames
-            if not queue.empty():
-                frame = queue.get()
-                if frame is not None and frame.any():
-                    video.write(frame)
+            try:
+                frame = queue.get(timeout=self._timeout)
+            except Empty:
+                print("VideoWriter thread: No frame available in the queue")
+                continue
+            else:
+                print(f"Writing frame n°{self._written_frame_count.value+1}...")
+                self._queue_frame_count.value -= 1
+                video.write(frame)
+                self._written_frame_count.value += 1
 
             # Print debug info
-            if debug.value:
+            if self._verbose.value:
                 print(
                     f"{current_process().name}/"
-                    f"File Open:{is_file_open.value}/"
-                    f"Queue Empty:{queue.empty()}"
+                    f"File:{"Open" if self.is_file_open() else "Closed"}/"
+                    f"Queue:{"Empty" if queue.empty() else "Not Empty" if not queue.full() else "Full"}/"
+                    f"In Queue:{self._queue_frame_count.value}/"
+                    f"Written:{self._written_frame_count.value}/"
+                    f"Dropped:{self._queue_frame_dropped_count.value}"
                 )
