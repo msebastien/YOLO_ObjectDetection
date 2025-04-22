@@ -2,17 +2,18 @@ import os
 import random
 import string
 import argparse
-from enum import Enum
 import tempfile
 import cv2
 from ultralytics import YOLO
 import supervision as sv
+from enum import Enum
 
+# from media_resource import MediaResourceType
 from display import Display
 from videowriter import VideoWriter
 
 
-class Resource(Enum):
+class MediaResourceType(Enum):
     IMAGE = 0
     STREAM = 1
 
@@ -46,12 +47,12 @@ def annotate_frame(results, original_img):
     return annotated_image
 
 
-def yolo_inference(resource, type, custom_model, confidence):
+def yolo_inference(resource, type, custom_model, confidence, verbose=False):
     model = YOLO("models/yolov12s_handgestures.pt")
     if custom_model:
         model = YOLO(custom_model)
 
-    if type == Resource.IMAGE:
+    if type == MediaResourceType.IMAGE:
         image = cv2.imread(resource, cv2.COLOR_RGB2BGR)
         height, width = image.shape[0], image.shape[1]
 
@@ -78,7 +79,7 @@ def yolo_inference(resource, type, custom_model, confidence):
 
     else:
         # Setup acquisition
-        cap = cv2.VideoCapture(resource)
+        cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -92,6 +93,7 @@ def yolo_inference(resource, type, custom_model, confidence):
             file_name="annotated_output",
             fps=fps,
             frame_size=frame_size,
+            verbose=verbose,
         ).start()
 
         # Acquisition
@@ -116,7 +118,7 @@ def yolo_inference(resource, type, custom_model, confidence):
         cap.release()
         video.stop()
 
-        return None, video.get_path()
+        return None, video.path()
 
 
 def main():
@@ -126,13 +128,24 @@ def main():
         description="Object Detection app powered by YOLOv12",
     )
     parser.add_argument(
-        "-t", "--threshold", type=float, default=0.25, help="Confidence threshold for detection"
+        "-t",
+        "--threshold",
+        type=float,
+        default=0.25,
+        help="Confidence threshold for detection",
     )
     parser.add_argument(
         "-m",
         "--model",
         default="",
-        help="Path to specify the path to another custom model",
+        help="Path to specify the path to another model",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="If specified, write additional information in the console "
+        "about the app execution",
     )
 
     group = parser.add_mutually_exclusive_group()
@@ -159,15 +172,16 @@ def main():
     args = parser.parse_args()
 
     # Video file/stream acquisition
-    if args.stream:
-        resource = args.stream
-        type = Resource.STREAM
-    elif args.image:
+    resource = args.stream
+    type = MediaResourceType.STREAM
+    print("RESOURCE TYPE STREAM")
+    if args.image:
         resource = args.image
-        type = Resource.IMAGE
+        type = MediaResourceType.IMAGE
+        print("RESOURCE TYPE IMAGE")
 
     annotated_image_path, annotated_video_path = yolo_inference(
-        resource, type, args.model, args.threshold
+        resource, type, args.model, args.threshold, args.verbose
     )
 
     if annotated_image_path:
