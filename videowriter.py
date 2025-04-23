@@ -165,7 +165,13 @@ class VideoWriter(object):
             p = Process(
                 name="WriterProcess",
                 target=self._writer_thread,
-                args=(self._output_video, self._frames),
+                args=(
+                    self._output_video,
+                    self._frames,
+                    self._queue_frame_count,
+                    self._written_frame_count,
+                    self._queue_frame_dropped_count,
+                ),
             )
             # daemon true means, exit when main program stops
             p.daemon = True
@@ -191,7 +197,14 @@ class VideoWriter(object):
 
         return output_video_path
 
-    def _writer_thread(self, video: cv2.VideoWriter, queue: Queue) -> None:
+    def _writer_thread(
+        self,
+        video: cv2.VideoWriter,
+        queue: Queue,
+        queue_count: int,
+        written_count: int,
+        dropped_count: int,
+    ) -> None:
         while self.is_file_open() or not queue.empty():
             # Process frames
             try:
@@ -200,17 +213,16 @@ class VideoWriter(object):
                 logger.warning("No frame available in the queue.")
                 continue
             else:
-                logger.info(f"Writing frame n°{self._written_frame_count.value+1}...")
-                self._queue_frame_count.value -= 1
+                logger.info(f"Writing frame n°{written_count.value+1}...")
+                queue_count.value -= 1
                 video.write(frame)
-                self._written_frame_count.value += 1
+                written_count.value += 1
 
             # Print debug info
-            if self._verbose.value:
-                logger.debug(
-                    f"File:{"Open" if self.is_file_open() else "Closed"}/"
-                    f"Queue:{"Empty" if queue.empty() else "Not Empty" if not queue.full() else "Full"}/"
-                    f"In Queue:{self._queue_frame_count.value}/"
-                    f"Written:{self._written_frame_count.value}/"
-                    f"Dropped:{self._queue_frame_dropped_count.value}"
-                )
+            logger.debug(
+                f"File:{"Open" if self.is_file_open() else "Closed"}/"
+                f"Queue:{"Empty" if queue.empty() else "Not Empty" if not queue.full() else "Full"}/"
+                f"In Queue:{queue_count.value}/"
+                f"Written:{written_count.value}/"
+                f"Dropped:{dropped_count.value}"
+            )
