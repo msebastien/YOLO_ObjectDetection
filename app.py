@@ -53,7 +53,7 @@ def annotate_frame(results, original_img):
     return annotated_image
 
 
-def yolo_inference(resource, type, custom_model, confidence, verbose=False):
+def yolo_inference(resource, type, custom_model, confidence):
     model = YOLO("models/yolov12s_handgestures.pt")
     if custom_model:
         model = YOLO(custom_model)
@@ -99,7 +99,6 @@ def yolo_inference(resource, type, custom_model, confidence, verbose=False):
             file_name="annotated_output",
             fps=fps,
             frame_size=frame_size,
-            verbose=verbose,
         ).start()
 
         # Acquisition
@@ -219,7 +218,7 @@ def main():
     logger.info(f"Resource Type: {type.name}")
 
     annotated_image_path, annotated_video_path = yolo_inference(
-        resource, type, args.model, args.threshold, args.verbose
+        resource, type, args.model, args.threshold
     )
 
     if annotated_image_path:

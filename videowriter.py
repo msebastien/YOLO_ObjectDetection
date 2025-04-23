@@ -24,7 +24,6 @@ class VideoWriter(object):
         frame_size: Tuple[int, int],
         timeout: int = 1,
         buffer_duration: int = 10,
-        verbose: bool = False,
     ) -> None:
         # Create file and get path to it
         self.file_name = file_name
@@ -39,7 +38,6 @@ class VideoWriter(object):
 
         # Synchronized values (stored in Shared Memory)
         self._is_open = Value(c_bool, False)
-        self._verbose = Value(c_bool, verbose)
         self._queue_frame_count = Value(c_int, 0)
         self._written_frame_count = Value(c_int, 0)
         self._queue_frame_dropped_count = Value(c_int, 0)
@@ -120,7 +118,7 @@ class VideoWriter(object):
             self._p = None
         return self
 
-    def write(self, image):
+    def write(self, image: cv2.typing.MatLike) -> None:
         """
         Add image to the frame queue to be written to a file.
         Args:
