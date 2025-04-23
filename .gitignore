@@ -1,5 +1,6 @@
 # Specific to this current project
 captures/
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
