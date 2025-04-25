@@ -78,7 +78,7 @@ class VideoWriter(object):
             VideoWriter: Current instance of VideoWriter.
         """
         if not self.is_running():
-            logger.info("Start Video Writer")
+            logger.info("Starting...")
             if self._is_open.value:
                 self._output_video.release()
 
@@ -88,6 +88,10 @@ class VideoWriter(object):
                 fourcc=self._codec,
                 fps=self.fps,
                 frameSize=self.frame_size,
+                params=(
+                    cv2.VIDEOWRITER_PROP_HW_ACCELERATION,
+                    cv2.VIDEO_ACCELERATION_ANY,
+                ),
             )
             # Spawn process for writing data in parallel
             self._p = self._create_process(self._max_queue_size)
@@ -100,16 +104,21 @@ class VideoWriter(object):
             VideoWriter: Current instance of VideoWriter.
         """
         if self.is_running():
-            # Free allocated queue data and join thread
+            logger.info("Stopping...")
+
+            # Close video file (which will stop the writer process)
+            self._is_open.value = False
+            self._output_video.release()
+
+            # Indicate that no more data will be put on this queue by the current
+            # process. The background thread will quit once it has flushed
+            # all buffered data to the pipe.
+            logger.info("Closing queue...")
             self._frames.close()
             self._frames.join_thread()
             #   Allow exit without flushing the queue in some cases,
             #   but can lead to frame data loss
             # self._frames.cancel_join_thread()
-
-            # Close video file (which will stop the writer process)
-            self._output_video.release()
-            self._is_open.value = False
 
             # Wait until video writer child process terminates
             self._p.join()
@@ -209,7 +218,6 @@ class VideoWriter(object):
                 frame = queue.get(timeout=self._timeout)
             except Empty:
                 logger.warning("No frame available in the queue.")
-                continue
             else:
                 logger.info(f"Writing frame n°{written_count.value+1}...")
                 queue_count.value -= 1
@@ -224,3 +232,4 @@ class VideoWriter(object):
                 f"Written:{written_count.value}/"
                 f"Dropped:{dropped_count.value}"
             )
+        logger.info("Finished")
