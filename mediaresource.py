@@ -81,7 +81,7 @@ class StreamResource(MediaResource):
         self,
         resource_location: Union[str, int],
         capture_api: int,
-        is_camera: int,
+        is_camera: bool,
     ):
         self._resource_location = resource_location
         self._type = MediaResourceType.STREAM
