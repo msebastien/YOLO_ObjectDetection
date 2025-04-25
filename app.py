@@ -9,19 +9,14 @@ import tempfile
 import cv2
 from ultralytics import YOLO
 import supervision as sv
-from enum import Enum
 
-# from media_resource import MediaResourceType
+from mediaresource import MediaResourceType
+from mediareader import MediaReader
 from display import Display
 from videowriter import VideoWriter
 
 
 logger = logging.getLogger(__name__)
-
-
-class MediaResourceType(Enum):
-    IMAGE = 0
-    STREAM = 1
 
 
 def copy_video_to_temp_file(file_path):
@@ -58,15 +53,18 @@ def yolo_inference(resource, type, custom_model, confidence):
     if custom_model:
         model = YOLO(custom_model)
 
+    reader = MediaReader.from_location(resource).start()
+
     if type == MediaResourceType.IMAGE:
-        image = cv2.imread(resource, cv2.COLOR_RGB2BGR)
-        height, width = image.shape[0], image.shape[1]
+        image = reader.read()
+        image_size = reader.frame_size()
+        logger.info(f"Image size:{image_size}")
 
         # Predict
-        results = model.predict(source=image, imgsz=(width, height), conf=confidence)
+        results = model.predict(source=image, imgsz=image_size, conf=confidence)
 
         # Annotated image
-        annotated_image = annotate_frame(results)
+        annotated_image = annotate_frame(results, image)
 
         # Save the result
         id = "".join(
@@ -84,15 +82,11 @@ def yolo_inference(resource, type, custom_model, confidence):
         return output_image_path, None
 
     else:
-        # Setup acquisition
-        cap = cv2.VideoCapture(0)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        frame_size = (frame_width, frame_height)
+        frame_size = reader.frame_size()
+        fps = reader.fps()
 
         # Create display window
-        display = Display(frame_width, frame_height)
+        display = Display(*frame_size)
 
         # Initialize VideoWriter utility and start process
         video = VideoWriter(
@@ -102,26 +96,24 @@ def yolo_inference(resource, type, custom_model, confidence):
         ).start()
 
         # Acquisition
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+        should_quit = False
+        while reader.can_read():
+            logger.info("Reader is reading...")
+            frame = reader.read()
+            if frame is not None and frame.any():
+                # Predict and save the newly annotated frame
+                results = model.predict(source=frame, imgsz=frame_size, conf=confidence)
+                annotated_frame = annotate_frame(results, frame)
 
-            # Predict and save the newly annotated frame
-            results = model.predict(source=frame, imgsz=frame_size, conf=confidence)
-            annotated_frame = annotate_frame(results, frame)
+                # Display in a window and write to a temp file
+                should_quit = display.paint(annotated_frame)
 
-            # Display in a window and write to a temp file
-            should_quit = display.paint(annotated_frame)
+                # Write to video file in a separate process
+                video.write(annotated_frame)
 
-            # Write to video file in a separate process
-            video.write(annotated_frame)
-
-            if should_quit or cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-        cap.release()
-        video.stop()
+            if should_quit or (cv2.waitKey(1) & 0xFF == ord("q")):
+                reader.stop()
+                video.stop()
 
         return None, video.path()
 
@@ -177,7 +169,8 @@ def main():
     args = parser.parse_args()
 
     # Init root logger
-    # Change root logger level from WARNING (default) to NOTSET in order for all messages to be delegated.
+    # Change root logger level from WARNING (default) to NOTSET
+    # in order for all messages to be delegated.
     logging.getLogger().setLevel(logging.NOTSET)
 
     # Add stdout handler for displaying logs in console
@@ -208,9 +201,13 @@ def main():
 
     logger.info("Started")
 
-    # Video file/stream acquisition
-    resource = args.stream
+    # Video file/stream
+    resource = args.camera
     type = MediaResourceType.STREAM
+
+    if args.stream:
+        resource = args.stream
+
     if args.image:
         resource = args.image
         type = MediaResourceType.IMAGE
