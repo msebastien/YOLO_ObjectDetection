@@ -34,3 +34,6 @@ class Display(object):
         self.window.refresh()
 
         return False
+
+    def close(self):
+        self.window.close()
