@@ -54,7 +54,6 @@ class MediaResource(ABC):
     @classmethod
     def create(cls, resource_location: Union[str, int]) -> Self:
         if isinstance(resource_location, str):
-            print(f"Resource Location:{resource_location}")
             type = cls._detect_media_type(resource_location)
             if type == MediaResourceType.STREAM:
                 return StreamResource.create_from_file(resource_location)
