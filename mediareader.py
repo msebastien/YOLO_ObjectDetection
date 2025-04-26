@@ -60,11 +60,13 @@ class MediaReader(object):
     def start(self) -> Self:
         if not self.is_running():
             logger.info("Starting...")
-            # if self._resource.is_initialized():
-            #    self._resource.release()
+            if self._resource.is_initialized():
+                self._resource.release()
 
             self._resource.open()
-            self._can_capture.value = self._resource.is_initialized()
+            self._can_capture.value = (
+                self._resource.is_initialized() or self._resource.is_image()
+            )
 
             # Spawn process for reading data in parallel
             self._p = self._create_process(self._max_queue_size)
@@ -109,10 +111,16 @@ class MediaReader(object):
             logger.warning("No frame available to read in the queue.")
             return np.array([])
         else:
+            if self._resource.is_image():
+                # frame is actually a full MediaResource object
+                # storing the image.
+                self._resource.copy(frame)
+
             self._queue_frame_count.value -= 1
             self._read_frame_count.value += 1
             logger.info(f"Reading Frame n°{self._read_frame_count.value}...")
-            return frame
+
+            return frame if not self._resource.is_image() else self._resource.read()[1]
 
     def _create_process(self, max_queue_size):
         if not self.is_running():
@@ -157,13 +165,18 @@ class MediaReader(object):
                 can_capture.value = False
                 break
 
-            if resource.is_image() and read_count.value >= 1:
+            if resource.is_image() and (
+                read_count.value >= 1 or queue_count.value >= 1
+            ):
                 can_capture.value = False
                 break
 
             # Add captured frames to queue waiting to be read and processed
             try:
-                queue.put(frame, timeout=self._timeout)
+                if not resource.is_image():
+                    queue.put(frame, timeout=self._timeout)
+                else:
+                    queue.put(resource, timeout=self._timeout)
             except Full:
                 logger.warning("Frame queue is full. A frame will be dequeued.")
                 queue.get()
