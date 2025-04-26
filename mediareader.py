@@ -5,6 +5,7 @@ from typing import Union, Tuple, Self
 from ctypes import c_bool, c_int
 from queue import Empty, Full
 from multiprocessing import Queue, Process, Value
+
 from mediaresource import MediaResource
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,7 @@ class MediaReader(object):
 
             return frame if not self._resource.is_image() else self._resource.read()[1]
 
-    def _create_process(self, max_queue_size):
+    def _create_process(self, max_queue_size) -> Union[Process, None]:
         if not self.is_running():
             # Create frame queue
             if not self._frames:
