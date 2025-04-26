@@ -63,7 +63,7 @@ install_opencv_cuda() {
     export CMAKE_ARGS="${CMAKE_ARGS} -D VIDEOIO_ENABLE_PLUGINS=ON"
     # Parallel processing
     export CMAKE_ARGS="${CMAKE_ARGS} -D WITH_PTHREADS_PF=ON"
-    # Thrrading plugins
+    # Threading plugins
     export CMAKE_ARGS="${CMAKE_ARGS} -D PARALLEL_ENABLE_PLUGINS=ON"
     # GUI Backends
     export CMAKE_ARGS="${CMAKE_ARGS} -D WITH_GTK=ON -D WITH_QT=ON"
