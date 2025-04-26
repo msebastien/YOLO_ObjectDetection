@@ -11,7 +11,7 @@ check_python_venv () {
         echo -n "A Python virtual environment has already been created. Activate it."
     else
         echo -n "No Python virtual environment. A new one will be created."
-        python3 -m venv .venv --system-site-packages
+        python3 -m venv "$1"/.venv --system-site-packages
     fi
 
     if [[ "$IS_VENV_INITIALIZED" == false ]]; then
@@ -90,6 +90,8 @@ install_opencv_cuda() {
     # Enable building opencv-contrib-python package
     export ENABLE_CONTRIB=1
 
+    # Check if project venv exists
+    check_python_venv "${PROJECT_PATH}"
     # Upgrade build tools
     python3 -m pip install --upgrade pip setuptools wheel
     # Build!
