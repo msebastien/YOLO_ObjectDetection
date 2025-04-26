@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Union, Tuple, Self
+import copy
+import logging
 import magic
 import cv2
+
+logger = logging.getLogger(__name__)
 
 
 class MediaResourceType(Enum):
@@ -21,6 +25,10 @@ class MediaResource(ABC):
 
     @abstractmethod
     def release(self) -> None:
+        pass
+
+    @abstractmethod
+    def copy(self, other: Self) -> None:
         pass
 
     @abstractmethod
@@ -118,6 +126,14 @@ class StreamResource(MediaResource):
             self._resource.release()
             self._resource = None
 
+    def copy(self, other: Self) -> None:
+        self._resource_location = copy.deepcopy(other._resource_location)
+        self._type = copy.deepcopy(other._type)
+        self._capture_api = copy.deepcopy(other._capture_api)
+        self._is_camera = copy.deepcopy(other._is_camera)
+        self.release()
+        self.open()
+
     def is_initialized(self) -> bool:
         return self._resource.isOpened()
 
@@ -151,13 +167,15 @@ class StreamResource(MediaResource):
 
 
 class ImageResource(MediaResource):
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, refresh_cache: bool = False):
         self._resource_location = filename
         self._type = MediaResourceType.IMAGE
-        self._resource = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
+        self._refresh_cache = refresh_cache
+        self._resource = None
 
     def read(self) -> Tuple[bool, cv2.typing.MatLike]:
-        self._resource = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
+        if not self.is_initialized() or (self._refresh_cache and self.is_initialized()):
+            self._resource = cv2.imread(self._resource_location, cv2.COLOR_RGB2BGR)
         return self.is_initialized(), self._resource
 
     def open(self) -> None:
@@ -166,6 +184,12 @@ class ImageResource(MediaResource):
     def release(self) -> None:
         if self.is_initialized():
             self._resource = None
+
+    def copy(self, other: Self) -> None:
+        self._resource_location = copy.deepcopy(other._resource_location)
+        self._type = copy.deepcopy(other._type)
+        self._refresh_cache = copy.deepcopy(other._refresh_cache)
+        self._resource = copy.deepcopy(other._resource)
 
     def is_initialized(self) -> bool:
         return self._resource is not None and self._resource.any()
