@@ -109,6 +109,6 @@ install_yolo () {
     echo -n "==============================================================="
 }
 
-install_pypi_packages
 install_opencv_cuda
+install_pypi_packages
 install_yolo
