@@ -90,6 +90,8 @@ install_opencv_cuda() {
     # Enable building opencv-contrib-python package
     export ENABLE_CONTRIB=1
 
+    # Upgrade build tools
+    python3 pip install --upgrade pip setuptools wheel
     # Build!
     python3 -m pip wheel . --verbose
     
