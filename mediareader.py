@@ -40,7 +40,7 @@ class MediaReader(object):
         cls,
         resource_location: Union[str, int],
         timeout: float = 1.0,
-        buffer_duration: int = 20,
+        buffer_duration: int = 10,
     ) -> Self:
         return cls(MediaResource.create(resource_location), timeout, buffer_duration)
 
