@@ -3,10 +3,10 @@ import sdl2.ext
 import cv2
 
 
-class Display(object):
-    def __init__(self, width, height):
+class Window(object):
+    def __init__(self, width, height, title="Video"):
         sdl2.ext.init()
-        self.window = sdl2.ext.Window("Video", size=(width, height))
+        self.window = sdl2.ext.Window(title, size=(width, height))
         self.window.show()
         self.width, self.height = width, height
 
