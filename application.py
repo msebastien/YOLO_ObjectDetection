@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 class Application(object):
     def __init__(
         self,
-        resource: MediaResource,
+        resource_location: Union[str, int],
         model: Union[str, Path],
         confidence: float,
     ) -> None:
-        self._reader = MediaReader.from_location(resource)
+        self._reader = MediaReader.from_location(resource_location)
         self.conf_threshold = confidence
 
         self._inference = Inference(model, confidence)

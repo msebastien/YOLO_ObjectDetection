@@ -218,7 +218,7 @@ def main():
 
     cv2.destroyAllWindows()
     """
-    app = Application(MediaResource.create(resource), args.model, args.threshold)
+    app = Application(resource, args.model, args.threshold)
     app.run()
 
     logger.info("Finished")
