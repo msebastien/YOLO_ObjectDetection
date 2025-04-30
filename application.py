@@ -1,10 +1,7 @@
 from typing import Union
 from pathlib import Path
-import random
-import string
 import logging
 import cv2
-from ultralytics import YOLO
 
 from mediaresource import MediaResource
 from mediareader import MediaReader
@@ -25,8 +22,6 @@ class Application(object):
     ) -> None:
         self._reader = MediaReader.from_location(resource)
         self.conf_threshold = confidence
-
-        self._model = YOLO(model)
 
         self._inference = Inference(model, confidence)
 
