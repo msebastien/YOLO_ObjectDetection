@@ -13,14 +13,6 @@ class Window(object):
     def paint(self, img):
         img = cv2.resize(img, (self.width, self.height))
 
-        # Retrieves a list of SDL2 events currently in the event queue
-        events = sdl2.ext.get_events()
-        for event in events:
-            # Checks if the event type is SDL_QUIT (window close event)
-            if event.type == sdl2.SDL_QUIT:
-                # exit(0)
-                return True
-
         # Retrieves a 3D numpy array that represents the pixel data of
         # the window's surface
         surface = sdl2.ext.pixels3d(self.window.get_surface())
@@ -33,7 +25,20 @@ class Window(object):
         # Refreshes the window to display the updated surface
         self.window.refresh()
 
-        return False
+        return
+
+    def close_requested(self):
+        ret = False
+
+        # Retrieves a list of SDL2 events currently in the event queue
+        events = sdl2.ext.get_events()
+
+        if sdl2.ext.quit_requested(events):
+            ret = True
+        elif sdl2.ext.key_pressed(events, sdl2.SDLK_q):
+            ret = True
+
+        return ret
 
     def close(self):
         self.window.close()
