@@ -80,6 +80,8 @@ class MediaResource(ABC):
                 detected_type = MediaResourceType.STREAM
             elif media == "image":
                 detected_type = MediaResourceType.IMAGE
+            else:
+                detected_type = MediaResourceType.STREAM
         return detected_type
 
 
