@@ -18,7 +18,10 @@ class Inference(object):
         self._model = YOLO(model)
         self._conf_threshold = confidence_threshold
 
-    def predict(self, frame: cv2.typing.NumPyArrayNumeric):
+    def predict(
+        self,
+        frame: cv2.typing.MatLike,
+    ) -> Union[cv2.typing.MatLike, None]:
         if frame is not None and frame.any():
             width, height = (frame.shape[1], frame.shape[0])
             results = self._model.predict(
@@ -32,8 +35,8 @@ class Inference(object):
     def _annotate(
         self,
         results: Results,
-        original_img: cv2.typing.NumPyArrayNumeric,
-    ) -> cv2.typing.NumPyArrayNumeric:
+        original_img: cv2.typing.MatLike,
+    ) -> cv2.typing.MatLike:
         annotated_image = original_img
 
         if len(results) > 0:
