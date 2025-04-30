@@ -149,7 +149,7 @@ def main():
         "-s",
         "--stream",
         default="",
-        help='Path to a video stream, which can be a file or a device (ex: "/dev/video0" or "test.mp4")',
+        help='Path to a video file (ex: "test.mp4")',
     )
     group.add_argument(
         "-i",
