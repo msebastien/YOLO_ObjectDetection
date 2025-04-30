@@ -26,7 +26,7 @@ class Application(object):
 
         self._inference = Inference(model, confidence)
 
-        self._is_stream = not resource_location.is_image()
+        self._is_stream = not self._resource.is_image()
         if self._is_stream:
             self._video = VideoWriter(
                 file_name="annotated_output",
