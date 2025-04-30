@@ -20,20 +20,21 @@ class Application(object):
         model: Union[str, Path],
         confidence: float,
     ) -> None:
-        self._reader = MediaReader.from_location(resource_location)
+        self._resource = MediaResource.create(resource_location)
+        self._reader = MediaReader(self._resource)
         self.conf_threshold = confidence
 
         self._inference = Inference(model, confidence)
 
-        self._is_stream = not resource.is_image()
+        self._is_stream = not resource_location.is_image()
         if self._is_stream:
             self._video = VideoWriter(
                 file_name="annotated_output",
-                fps=resource.fps(),
-                frame_size=resource.frame_size(),
+                fps=self._resource.fps(),
+                frame_size=self._resource.frame_size(),
             )
 
-        self._display = Display.create(resource)
+        self._display = Display.create(self._resource)
         self._output_file = None
 
     def run(self) -> None:
