@@ -9,7 +9,7 @@ import cv2
 from ultralytics import YOLO
 
 from application import Application
-from mediaresource import MediaResourceType
+from mediaresource import MediaResource, MediaResourceType
 from mediareader import MediaReader
 from window import Window
 from videowriter import VideoWriter
@@ -218,7 +218,7 @@ def main():
 
     cv2.destroyAllWindows()
     """
-    app = Application(resource, args.model, args.threshold)
+    app = Application(MediaResource.create(resource), args.model, args.threshold)
     app.run()
 
     logger.info("Finished")
