@@ -5,29 +5,20 @@ import string
 import logging
 import logging.handlers
 import argparse
-import tempfile
 import cv2
 from ultralytics import YOLO
-import supervision as sv
 
+from application import Application
 from mediaresource import MediaResourceType
 from mediareader import MediaReader
-from display import Display
+from window import Window
 from videowriter import VideoWriter
 
 
 logger = logging.getLogger(__name__)
 
 
-def copy_video_to_temp_file(file_path):
-    file_ext = os.path.splitext(file_path)[1]
-    video_path = tempfile.mktemp(suffix=file_ext)
-
-    with open(video_path, "wb") as f:
-        with open(file_path, "rb") as g:
-            f.write(g.read())
-
-
+"""
 def annotate_frame(results, original_img):
     annotated_image = original_img
 
@@ -46,6 +37,7 @@ def annotate_frame(results, original_img):
         )
 
     return annotated_image
+"""
 
 
 def yolo_inference(resource, type, custom_model, confidence):
@@ -86,7 +78,7 @@ def yolo_inference(resource, type, custom_model, confidence):
         fps = reader.fps()
 
         # Create display window
-        display = Display(*frame_size)
+        display = Window(*frame_size)
 
         # Initialize VideoWriter utility and start process
         video = VideoWriter(
@@ -111,7 +103,7 @@ def yolo_inference(resource, type, custom_model, confidence):
                 # Write to video file in a separate process
                 video.write(annotated_frame)
 
-            if should_quit or (cv2.waitKey(1) & 0xFF == ord("q")):
+            if should_quit:
                 reader.stop()
                 video.stop()
 
@@ -203,17 +195,18 @@ def main():
 
     # Video file/stream
     resource = args.camera
-    type = MediaResourceType.STREAM
+    # type = MediaResourceType.STREAM
 
     if args.stream:
         resource = args.stream
 
     if args.image:
         resource = args.image
-        type = MediaResourceType.IMAGE
+        # type = MediaResourceType.IMAGE
 
-    logger.info(f"Resource Type: {type.name}")
+    # logger.info(f"Resource Type: {type.name}")
 
+    """
     annotated_image_path, annotated_video_path = yolo_inference(
         resource, type, args.model, args.threshold
     )
@@ -224,6 +217,9 @@ def main():
         logger.info(f"Annotated video file saved! ({annotated_video_path})")
 
     cv2.destroyAllWindows()
+    """
+    app = Application(resource, args.model, args.threshold)
+    app.run()
 
     logger.info("Finished")
 
