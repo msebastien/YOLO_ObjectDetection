@@ -6,7 +6,7 @@ from ctypes import c_bool, c_int
 from queue import Empty, Full
 from multiprocessing import Queue, Process, Value
 
-from mediaresource import MediaResource
+from mediaresource import MediaResource, MediaResourceType
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,9 @@ class MediaReader(object):
         return self._can_capture.value or (
             self._frames is not None and not self._frames.empty()
         )
+
+    def resource_type(self) -> MediaResourceType:
+        return self._resource.type()
 
     def frame_size(self) -> Tuple[int, int]:
         return self._resource.frame_size()
