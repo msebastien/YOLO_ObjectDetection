@@ -11,6 +11,7 @@ class Display(ABC):
     def show(self, frame: cv2.typing.NumPyArrayNumeric) -> None:
         pass
 
+    @abstractmethod
     def close_requested(self) -> bool:
         pass
 
