@@ -15,15 +15,19 @@ class Display(ABC):
     def close_requested(self) -> bool:
         pass
 
+    @abstractmethod
+    def close(self) -> None:
+        pass
+
     @classmethod
-    def create(cls, resource: MediaResource, title: str = None):
+    def create(cls, resource: MediaResource):
         match resource.type():
             case MediaResourceType.STREAM:
-                return SDLDisplay(*resource.frame_size(), title)
+                return SDLDisplay(*resource.frame_size())
             case MediaResourceType.IMAGE:
-                return CVImageDisplay(title)
+                return CVImageDisplay()
             case _:
-                return SDLDisplay(*resource.frame_size(), title)
+                return SDLDisplay(*resource.frame_size())
 
 
 class SDLDisplay(Display):
@@ -36,13 +40,24 @@ class SDLDisplay(Display):
     def close_requested(self):
         return self._window.close_requested()
 
+    def close(self):
+        self._window.close()
+
 
 class CVImageDisplay(Display):
     def __init__(self, title="Image"):
         self._title = title
+        self._close = False
 
     def show(self, frame):
         cv2.imshow(self._title, frame)
 
     def close_requested(self):
-        return cv2.waitKey(1) & 0xFF == ord("q")
+        while cv2.getWindowProperty(self._title, cv2.WND_PROP_VISIBLE) >= 1:
+            keyCode = cv2.waitKey(delay=1000)
+            if keyCode & 0xFF == ord("q"):
+                break
+        return True
+
+    def close(self):
+        cv2.destroyWindow(self._title)
