@@ -27,22 +27,22 @@ class Application(object):
         self._inference = Inference(model, confidence)
 
         self._is_stream = not self._resource.is_image()
-        if self._is_stream:
-            self._video = VideoWriter(
-                file_name="annotated_output",
-                fps=self._resource.fps(),
-                frame_size=self._resource.frame_size(),
-            )
+        self._video = VideoWriter(
+            file_name="annotated_output",
+            fps=self._resource.fps(),
+            frame_size=self._resource.frame_size(),
+        )
 
         self._display = Display.create(self._resource)
-        self._output_file = None
+        self._output_file = ""
 
     def run(self) -> None:
         self._reader.start()
 
+        # Retrieve output video/image file path
         if self._is_stream:
-            self._output_file = self._video.path()
             self._video.start()
+            self._output_file = self._video.path()
         else:
             self.output_file = utils._get_image_path()
 
@@ -65,10 +65,9 @@ class Application(object):
             if self._display.close_requested():
                 self._reader.stop()
                 self._video.stop()
+                self._display.close()
 
         logger.info(
-            f"Annotated {self._reader.resource_type()} file saved!"
-            f"({self.output_file})"
+            f"Annotated {self._reader.resource_type().name} file saved!"
+            f"({self._output_file})"
         )
-
-        cv2.destroyAllWindows()
