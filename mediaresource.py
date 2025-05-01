@@ -134,6 +134,7 @@ class StreamResource(MediaResource):
         self._capture_api = copy.deepcopy(other._capture_api)
         self._is_camera = copy.deepcopy(other._is_camera)
         self.release()
+        other.release()
         self.open()
 
     def is_initialized(self) -> bool:
