@@ -165,6 +165,10 @@ class MediaReader(object):
             # Capture frame
             ret, frame = resource.read()
 
+            if not ret:
+                can_capture.value = False
+                break
+
             if frame is None:
                 logger.warning("Frame is None! Try again to capture...")
                 continue
@@ -172,10 +176,6 @@ class MediaReader(object):
             if not frame.any():
                 logger.warning("Frame is EMPTY! Try again to capture...")
                 continue
-
-            if not ret:
-                can_capture.value = False
-                break
 
             if resource.is_image() and (
                 read_count.value >= 1 or queue_count.value >= 1
