@@ -27,7 +27,7 @@ class VideoWriter(object):
     ) -> None:
         # Create file and get path to it
         self.file_name = file_name
-        self._output_file_path = self._create_output_file(self.file_name)
+        self._output_file_path = ""
         self._timeout = timeout
 
         # Set up codec and output video settings
@@ -73,7 +73,8 @@ class VideoWriter(object):
 
     def start(self) -> Self:
         """
-        Start the Video Writer process.
+        Create and open a new video file, then start the process
+        to write data to it.
         Returns:
             VideoWriter: Current instance of VideoWriter.
         """
@@ -81,6 +82,9 @@ class VideoWriter(object):
             logger.info("Starting...")
             if self._is_open.value:
                 self._output_video.release()
+
+            # Create a new file
+            self._output_file_path = self._create_output_file(self.file_name)
 
             # Open video file for writing data to it
             self._is_open.value = self._output_video.open(
@@ -136,8 +140,13 @@ class VideoWriter(object):
         if self._frames is None:
             return
 
-        if image is None and not image.any():
-            logger.warning("Image is None or an empty array.")
+        if image is None:
+            logger.warning("Image is None")
+            return
+
+        if not image.any():
+            logger.warning("Image is an empty array")
+            return
 
         if not self.is_running():
             self.start()
