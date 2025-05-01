@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 class Inference(object):
     def __init__(
         self,
-        model: Union[str, Path] = "models/detect/yolov12s_handgestures.pt",
+        model: Union[str, Path] = None,
         confidence_threshold: float = 0.25,
     ) -> None:
-        self._model = YOLO(model)
+        self.model_path = model if model else "models/detect/yolov12s_handgestures.pt"
+        self._model = YOLO(self.model_path)
         self._conf_threshold = confidence_threshold
 
     def predict(
@@ -50,14 +51,14 @@ class Inference(object):
 
             # Define custom labels for bounding boxes
             labels = [
-                f"{class_name} {confidence:.2f}"
+                f"{class_name} ({confidence:.2f})"
                 for class_name, confidence in zip(
                     detections["class_name"], detections.confidence
                 )
             ]
 
             # Display labels
-            label_annotator = sv.LabelAnnotator(text_position=sv.Position.CENTER)
+            label_annotator = sv.LabelAnnotator(text_position=sv.Position.TOP_CENTER)
             annotated_image = label_annotator.annotate(
                 scene=annotated_image,
                 detections=detections,
