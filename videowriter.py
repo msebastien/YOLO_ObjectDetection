@@ -2,6 +2,7 @@ import os
 import random
 import string
 import logging
+from datetime import datetime
 from typing import Union, Tuple, Self
 import cv2
 from ctypes import c_bool, c_int
@@ -213,6 +214,22 @@ class VideoWriter(object):
 
         return output_video_path
 
+    def _add_overlay(self, frame: cv2.typing.MatLike) -> None:
+        """_summary_
+        Add an overlay to display current date and time
+        Args:
+            frame (cv2.typing.MatLike): OpenCV Frame as a numpy array
+        """
+        frame = cv2.putText(
+            img=frame,
+            text=f"Date: {datetime.now()}",
+            org=(50, 50),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=0.75,
+            color=(0, 255, 0),
+            thickness=2,
+        )
+
     def _writer_thread(
         self,
         video: cv2.VideoWriter,
@@ -230,6 +247,7 @@ class VideoWriter(object):
             else:
                 logger.info(f"Writing frame n°{written_count.value+1}...")
                 queue_count.value -= 1
+                self._add_overlay(frame)
                 video.write(frame)
                 written_count.value += 1
 
