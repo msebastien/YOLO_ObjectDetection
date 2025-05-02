@@ -215,7 +215,7 @@ class VideoWriter(object):
         return output_video_path
 
     def _add_overlay(self, frame: cv2.typing.MatLike) -> None:
-        """_summary_
+        """
         Add an overlay to display current date and time
         Args:
             frame (cv2.typing.MatLike): OpenCV Frame as a numpy array
