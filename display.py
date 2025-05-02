@@ -8,7 +8,7 @@ from window import Window
 
 class Display(ABC):
     @abstractmethod
-    def show(self, frame: cv2.typing.NumPyArrayNumeric) -> None:
+    def show(self, frame: cv2.typing.MatLike) -> None:
         pass
 
     @abstractmethod
