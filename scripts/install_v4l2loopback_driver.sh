@@ -2,7 +2,7 @@
 # Script to install v4l2loopback for DroidCam which allows using an Android phone as a webcam
 # Written by Sébastien Maes
 
-VERSION=0.14.0
+VERSION=0.15.0
 
 # Download and extract the tarball (tar requires superuser privileges)
 curl -L https://github.com/umlaeute/v4l2loopback/archive/v${VERSION}.tar.gz | sudo tar xvz -C /usr/src
