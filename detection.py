@@ -35,6 +35,7 @@ class Detection(Task):
         plots=False,
     ):
         date = datetime.datetime.now()
+        name = date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")
         return self._model.train(
             data=dataset,
             imgsz=img_size,
@@ -51,7 +52,7 @@ class Detection(Task):
             workers=8,
             device=device,
             project="training",
-            name=f"{date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")}",
+            name=name,
             overlap_mask=True,
             mask_ratio=4,
             dropout=0.0,
@@ -73,6 +74,7 @@ class Detection(Task):
 
     def val(self, dataset="coco.yaml", device="cpu"):
         date = datetime.datetime.now()
+        name = date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")
         return self._model.val(
             data=dataset,
             batch=16,
@@ -85,7 +87,7 @@ class Detection(Task):
             iou=0.7,
             device=device,
             project="validation",
-            name=f"{date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")}",
+            name=name,
             plots=True,
             save_txt=True,
             save_conf=True,
