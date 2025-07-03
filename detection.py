@@ -26,7 +26,14 @@ class Detection(Task):
         self._model = YOLO(model=self.model_path, task="detect", verbose=self._verbose)
         self._conf_threshold = confidence_threshold
 
-    def train(self, dataset="coco.yaml", img_size=640, epochs=100, device="cpu", plots=False):
+    def train(
+        self,
+        dataset="coco.yaml",
+        img_size=640,
+        epochs=100,
+        device="cpu",
+        plots=False,
+    ):
         date = datetime.datetime.now()
         return self._model.train(
             data=dataset,
