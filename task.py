@@ -10,9 +10,10 @@ class Task(ABC):
     def train(
         self,
         dataset: str,
+        img_size: int,
         epochs: int,
         device: str,
-        resume: bool,
+        plots: bool,
     ) -> Union[Dict, None]:
         pass
 
@@ -24,5 +25,5 @@ class Task(ABC):
         pass
 
     @abstractmethod
-    def val(self, dataset: str, device: str, verbose: bool) -> DetMetrics:
+    def val(self, dataset: str, device: str) -> DetMetrics:
         pass
