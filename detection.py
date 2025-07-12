@@ -74,7 +74,7 @@ class Detection(Task):
 
     def val(self, dataset="coco.yaml", device="cpu"):
         date = datetime.datetime.now()
-        name = date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")
+        name = date.strftime(f"{self._model.model_name}_detection_%Y-%m-%d_%H-%M-%S")
         return self._model.val(
             data=dataset,
             batch=16,
