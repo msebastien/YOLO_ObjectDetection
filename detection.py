@@ -35,7 +35,7 @@ class Detection(Task):
         plots=False,
     ):
         date = datetime.datetime.now()
-        name = date.strftime(f"{self._model.model_name}_%Y-%m-%d_%H-%M-%S")
+        name = date.strftime(f"{self._model.model_name}_detection_%Y-%m-%d_%H-%M-%S")
         return self._model.train(
             data=dataset,
             imgsz=img_size,
