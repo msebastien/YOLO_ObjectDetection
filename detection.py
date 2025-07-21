@@ -99,7 +99,6 @@ class Detection(Task):
                 visualize=visualize,
                 augment=False,
                 agnostic_nms=False,
-                retina_masks=False,
                 project="prediction",
                 name=dir_name,
                 verbose=self._verbose,
