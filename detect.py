@@ -12,7 +12,7 @@ from task import Task
 logger = logging.getLogger(__name__)
 
 
-class Detection(Task):
+class Detect(Task):
     """
     Detection task class for YOLO models.
     """
