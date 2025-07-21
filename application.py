@@ -5,7 +5,7 @@ import cv2
 
 from mediaresource import MediaResource
 from mediareader import MediaReader
-from detection import Detection
+from detect import Detect
 from videowriter import VideoWriter
 from display import Display
 import utils
@@ -26,7 +26,7 @@ class Application(object):
 
         # TODO: Create Task using a classmethod
         # Task.create(model, confidence)
-        self._inference = Detection(model, confidence)
+        self._inference = Detect(model, confidence)
 
         self._is_stream = not self._resource.is_image()
         self._video = VideoWriter(
