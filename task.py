@@ -21,6 +21,9 @@ class Task(ABC):
     def predict(
         self,
         frame: cv2.typing.MatLike,
+        half: bool,
+        device: str,
+        visualize: bool,
     ) -> Union[cv2.typing.MatLike, None]:
         pass
 
