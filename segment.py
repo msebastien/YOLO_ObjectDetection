@@ -75,7 +75,7 @@ class Segment(Task):
             val=True,
             plots=plots,
             profile=False,
-            # Segmentation specific parameters
+            # Segmentation specific arguments
             overlap_mask=True,
             mask_ratio=4,
         )
